@@ -323,46 +323,84 @@
   }
 
   window.cwepReceiveMessage = async function (message) {
-    log("host → plugin", message);
+  log("host → plugin raw", {
+    typeOf: typeof message,
+    protocol: message && message.protocol ? message.protocol : null,
+    message
+  });
 
+  let normalizedMessage = message;
+
+  // MARK: Manche Hosts übergeben JSON als String statt als Objekt.
+  // Für robuste CEWP-Kompatibilität normalisieren wir das hier.
+  if (typeof normalizedMessage === "string") {
     try {
-      if (!message || message.protocol !== "cwep") {
-        throw new Error("Unsupported or missing protocol");
-      }
-
-      switch (message.type) {
-        case "hello":
-          sendHelloAck(message.requestId);
-          break;
-
-        case "getCapabilities":
-          sendCapabilities(message.requestId);
-          break;
-
-        case "setPosition":
-          await setPosition(message.payload);
-          break;
-
-        case "startAnalysis":
-          await startAnalysis(message.requestId, message.payload);
-          break;
-
-        case "stopAnalysis":
-          stopAnalysis();
-          break;
-
-        case "setOptions":
-          setOptions(message.requestId, message.payload);
-          break;
-
-        default:
-          sendError(message.requestId, "UNSUPPORTED_MESSAGE", `Unsupported message type: ${message.type}`, true);
-      }
+      normalizedMessage = JSON.parse(normalizedMessage);
+      log("host → plugin parsed string message", normalizedMessage);
     } catch (error) {
-      sendError(message && message.requestId, "INTERNAL_ERROR", error.message || String(error), false);
+      sendError(
+        undefined,
+        "INVALID_PAYLOAD",
+        "Could not parse string message as JSON",
+        false
+      );
+      return;
     }
-  };
+  }
 
+  try {
+    if (!normalizedMessage || normalizedMessage.protocol !== "cewp") {
+      throw new Error("Unsupported or missing protocol");
+    }
+
+    switch (normalizedMessage.type) {
+      case "hello":
+        sendHelloAck(normalizedMessage.requestId);
+        break;
+
+      case "getCapabilities":
+        sendCapabilities(normalizedMessage.requestId);
+        break;
+
+      case "setPosition":
+        await setPosition(normalizedMessage.payload);
+        break;
+
+      case "startAnalysis":
+        await startAnalysis(
+          normalizedMessage.requestId,
+          normalizedMessage.payload
+        );
+        break;
+
+      case "stopAnalysis":
+        stopAnalysis();
+        break;
+
+      case "setOptions":
+        setOptions(
+          normalizedMessage.requestId,
+          normalizedMessage.payload
+        );
+        break;
+
+      default:
+        sendError(
+          normalizedMessage.requestId,
+          "UNSUPPORTED_MESSAGE",
+          `Unsupported message type: ${normalizedMessage.type}`,
+          true
+        );
+    }
+  } catch (error) {
+    sendError(
+      normalizedMessage && normalizedMessage.requestId,
+      "INTERNAL_ERROR",
+      error.message || String(error),
+      false
+    );
+  }
+};
   updateUi();
   loadEngineIfNeeded().catch((error) => {
     log("engine load failed", { message: error.message });
