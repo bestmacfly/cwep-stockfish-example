@@ -1,0 +1,15 @@
+{
+  "protocol": "cewp",
+  "version": "1.0",
+  "plugin": {
+    "id": "cewp-stockfish-example",
+    "name": "CEWP Stockfish Example",
+    "vendor": "Community",
+    "version": "1.0.0"
+  },
+  "features": {
+    "analysis": true,
+    "multiPv": true,
+    "setOptions": true
+  }
+}
