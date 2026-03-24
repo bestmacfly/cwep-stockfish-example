@@ -305,22 +305,27 @@
   }
 
   function setOptions(requestId, payload) {
-    if (!payload || typeof payload.options !== "object" || !payload.options) {
-      sendError(requestId, "INVALID_PAYLOAD", "setOptions requires an options object", true);
-      return;
-    }
-
-    loadEngineIfNeeded()
-      .then(() => {
-        Object.entries(payload.options).forEach(([key, value]) => {
-          const optionName = key === "hashMb" ? "Hash" : key === "threads" ? "Threads" : key;
-          engineCommand(`setoption name ${optionName} value ${value}`);
-        });
-      })
-      .catch((error) => {
-        sendError(requestId, "ENGINE_NOT_READY", error.message, true);
-      });
+  if (!payload || typeof payload.options !== "object" || !payload.options) {
+    sendError(requestId, "INVALID_PAYLOAD", "setOptions requires an options object", true);
+    return;
   }
+
+  loadEngineIfNeeded()
+    .then(() => {
+      Object.entries(payload.options).forEach(([key, value]) => {
+        const optionName =
+          key === "hashMb" ? "Hash" :
+          key === "threads" ? "Threads" :
+          key === "multiPv" ? "MultiPV" :
+          key;
+
+        engineCommand(`setoption name ${optionName} value ${value}`);
+      });
+    })
+    .catch((error) => {
+      sendError(requestId, "ENGINE_NOT_READY", error.message, true);
+    });
+}
 
   window.cwepReceiveMessage = async function (message) {
   log("host → plugin raw", {
