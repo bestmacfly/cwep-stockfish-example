@@ -192,7 +192,8 @@
     const scoreCpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
     const scoreMateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
     const pvMatch = line.match(/\bpv\s+(.+)$/);
-
+const multipvMatch = line.match(/\bmultipv\s+(\d+)/);
+const multipv = multipvMatch ? Number(multipvMatch[1]) : 1;
     const depth = depthMatch ? Number(depthMatch[1]) : null;
     let score = null;
 
@@ -231,7 +232,8 @@
     if (state.currentRequestId) {
       postToHost(wrapMessage("analysisUpdate", state.currentRequestId, {
         depth: state.lastDepth,
-        score: state.lastScoreObject || null,
+multipv: multipv,      
+  score: state.lastScoreObject || null,
         pv: state.lastPv || [],
         bestMove: state.bestMove || null
       }));
@@ -277,11 +279,11 @@
     const movetimeMs = payload && payload.limits && Number.isInteger(payload.limits.movetimeMs)
       ? payload.limits.movetimeMs
       : 1000;
-
     setState("analyzing");
     engineCommand("ucinewgame");
     engineCommand(`setoption name MultiPV value ${state.currentMultiPv}`);
-    engineCommand(`position fen ${state.currentFen}`);
+    
+engineCommand(`position fen ${state.currentFen}`);
 
     if (depth !== null) {
       engineCommand(`go depth ${depth}`);
@@ -326,7 +328,6 @@
       sendError(requestId, "ENGINE_NOT_READY", error.message, true);
     });
 }
-
   window.cwepReceiveMessage = async function (message) {
   log("host → plugin raw", {
     typeOf: typeof message,
