@@ -1,0 +1,11 @@
+{
+  "name": "cwep-stockfish-example",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 scripts/serve.py",
+    "verify": "python3 scripts/verify-assets.py"
+  }
+}

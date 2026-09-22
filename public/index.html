@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CEWP Stockfish Example</title>
+  <title>CWEP Stockfish Example</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -57,9 +57,9 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>CEWP Stockfish Example</h1>
+    <h1>CWEP Stockfish Example</h1>
     <p class="muted">
-      Reference web plugin for the Chess Engine Web Protocol.
+      Reference web plugin for the Chess Web Engine Protocol.
     </p>
 
     <div class="card">
@@ -77,6 +77,9 @@
     </div>
 
     <div class="card">
+      <button id="sample" type="button">Run sample analysis</button>
+      <button id="stop" type="button">Stop analysis</button>
+      <p class="muted">Sample: starting position, two variations, up to 1 second.</p>
       <h2>Latest analysis</h2>
       <div><strong>Depth:</strong> <span id="depth">—</span></div>
       <div><strong>Score:</strong> <span id="score">—</span></div>
@@ -86,12 +89,15 @@
     </div>
 
     <div class="card">
-      <h2>Debug log</h2>
+      <p>Stockfish.js 18.0.0 Lite · GPL v3. <a href="./licenses.html">Licenses, corresponding source and build instructions</a>.</p>
+      <p>This page receives CWEP messages from a host application. Computation runs on your device.</p>
+    </div>
+    <div class="card">
+      <h2>Protocol log</h2>
       <pre id="log"></pre>
     </div>
   </div>
 
-  <script src="./config.js"></script>
-  <script src="./app.js"></script>
+  <script type="module" src="./demo.js"></script>
 </body>
 </html>

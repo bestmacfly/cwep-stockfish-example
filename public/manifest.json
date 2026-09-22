@@ -1,15 +1,25 @@
 {
-  "protocol": "cewp",
+  "protocol": "cwep",
   "version": "1.0",
+  "supportedVersions": [
+    "1.0"
+  ],
+  "transport": "webview-bridge",
   "plugin": {
-    "id": "cewp-stockfish-example",
-    "name": "CEWP Stockfish Example",
-    "vendor": "Community",
-    "version": "1.0.0"
+    "id": "cwep-stockfish-example",
+    "name": "CWEP Stockfish Example",
+    "version": "1.1.0"
+  },
+  "engine": {
+    "name": "Stockfish.js",
+    "version": "18.0.0",
+    "variant": "lite-multithreaded"
   },
   "features": {
     "analysis": true,
     "multiPv": true,
-    "setOptions": true
+    "setOptions": true,
+    "moves": true,
+    "cancellation": true
   }
 }

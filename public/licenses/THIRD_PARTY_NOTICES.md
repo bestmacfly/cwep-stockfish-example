@@ -1,0 +1,24 @@
+# Third-party notices
+
+Own adapter: `cwep-stockfish-example`, Copyright (C) 2026 bestmacfly; existing GPL v3-or-later notice retained in the repository LICENSE. Changes dated 2026-09-21 concern the adapter and demo, not the engine. The separate CWEP specification is MIT licensed. Deploy these notices and the source-download links with the demo.
+
+## Demo runtime and engine sources
+
+| Component | Source / version | License and local notices |
+|---|---|---|
+| Stockfish / Stockfish.js | [v18.0.0 release](https://github.com/nmrugg/stockfish.js/releases/tag/v18.0.0), [complete fork source download](https://codeload.github.com/nmrugg/stockfish.js/tar.gz/31a98753a5d932511693f44775da908377c24513); exact commits and hashes in [provenance.json](../source/provenance.json) | [GPL v3](GPL-3.0.txt); source headers permit v3 or later. Chess.com © 2026; Nathan Rugg; T. Romstad, M. Costalba, J. Kiiski, G. Linscott and [other contributors](THIRD_PARTY_LICENSES.txt) (section 1). No local engine/port edits. |
+| Embedded NNUE | [nn-9067e33176e8.nnue](https://tests.stockfishchess.org/api/nn/nn-9067e33176e8.nnue), credited by the loader to Linmiao Xu (linrock) | [CC0](THIRD_PARTY_LICENSES.txt) (section 2), based on [Fishtest upload terms](https://github.com/official-stockfish/fishtest/blob/0fbfea4f4d615d420d540a44bfad35be5005daf4/server/fishtest/templates/nn_upload.html.j2). Net bytes verified against initialized WASM memory. Original individual upload declaration/training history not independently retrieved. |
+| chess.js validation | 1.4.0, Jeff Hlywa © 2025; [source package](../source/chess.js-1.4.0.tgz) | [BSD-2-Clause](THIRD_PARTY_LICENSES.txt) (section 3); locally vendored, unchanged |
+| Emscripten glue and runtimes | Build expects [Emscripten 3.1.7 source](https://github.com/emscripten-core/emscripten/tree/3.1.7); compiler SDK is external | [MIT/NCSA and bundled notices](THIRD_PARTY_LICENSES.txt) (section 4), [musl notices](THIRD_PARTY_LICENSES.txt) (section 5), [libc++](THIRD_PARTY_LICENSES.txt) (section 6), [libc++abi](THIRD_PARTY_LICENSES.txt) (section 7), [compiler-rt](THIRD_PARTY_LICENSES.txt) (section 8) (Apache-2.0 with LLVM exception and historical texts). Runtime notices retained conservatively; exact historical linker inventory not available. |
+
+Upstream Stockfish's [base-commit README](https://github.com/official-stockfish/Stockfish/blob/cb3d4ee9b47d0c5aae855b12379378ea1439675c/README.md) credits [Leela Chess Zero training data](https://storage.lczero.org/files/training_data), under [ODbL](https://opendatacommons.org/licenses/odbl/odbl-10.txt). That acknowledgement is retained; no raw training database or particular Lite training run is asserted here.
+
+## Source provenance and upstream build
+
+The unchanged Stockfish.js **v18.0.0 Lite multithreaded** JS/WASM release assets correspond to fork commit `31a98753a5d932511693f44775da908377c24513`, based on official Stockfish `cb3d4ee9b47d0c5aae855b12379378ea1439675c`. [Complete commit-bound fork sources](https://codeload.github.com/nmrugg/stockfish.js/tar.gz/31a98753a5d932511693f44775da908377c24513) include engine/port code, Makefiles, `build.js` and UglifyJS 3.17.4. The stale top-level package.json says 17.1.0; the release, build script and runtime identify Stockfish 18.
+
+For the upstream Lite build, place [nn-9067e33176e8.nnue](https://tests.stockfishchess.org/api/nn/nn-9067e33176e8.nnue) in the extracted fork's `src/`, activate Emscripten SDK 3.1.7 with its prerequisites, Node.js and make, then run `node build.js --lite --no-split --force` from the extracted fork root. This selects SIMD and pthreads; do not add `--single-threaded`. Full flags are in `src/Makefile` and `src/emscripten/wasm-makefile.mk`. The compiler SDK remains an external prerequisite.
+
+The source archive and standalone net are hosted upstream, not bundled here. Both downloads were retrieved anonymously on 2026-09-21; fork files match the previously supplied sources and the net matches the previously verified embedded bytes. [provenance.json](../source/provenance.json) separates local artifacts from external sources and records sizes, hashes and original release provenance. `python3 scripts/verify-assets.py` checks only local artifacts offline. Under GPL v3 §6(d), we remain responsible for keeping equivalent access to the corresponding sources available for the required period; today's download check does not establish future availability.
+
+No engine rebuild or bit-identical reproduction was performed. Original build logs, the exact execution environment and historical minifier use remain unverified. UglifyJS is a build-time tool; incbin's embedding macros are bypassed by the WASM branch in favor of generated network headers. Neither is locally distributed after removal of the source archive; runtime and embedded-NNUE notices above remain applicable.

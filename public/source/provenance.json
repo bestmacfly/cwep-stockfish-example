@@ -1,0 +1,68 @@
+{
+  "auditedOn": "2026-09-21",
+  "stockfishJsRelease": "v18.0.0",
+  "stockfishJsCommit": "31a98753a5d932511693f44775da908377c24513",
+  "officialStockfishCommit": "cb3d4ee9b47d0c5aae855b12379378ea1439675c",
+  "buildVariant": "lite-multithreaded",
+  "expectedEmscripten": "3.1.7",
+  "localEngineModifications": false,
+  "localArtifacts": [
+    {
+      "path": "stockfish/stockfish-18-lite.js",
+      "source": "https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/stockfish-18-lite.js",
+      "bytes": 32109,
+      "sha256": "f79e667c9d56ee768aca35e8343f91548ceef6a732f67cd82f267cf9eab7f665"
+    },
+    {
+      "path": "stockfish/stockfish-18-lite.wasm",
+      "source": "https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/stockfish-18-lite.wasm",
+      "bytes": 7093151,
+      "sha256": "d50136919dcd90e75eb8df78b255d47d618962b670028b38961343f6eb409174"
+    },
+    {
+      "path": "source/chess.js-1.4.0.tgz",
+      "source": "https://registry.npmjs.org/chess.js/-/chess.js-1.4.0.tgz",
+      "bytes": 150018,
+      "sha256": "dce92e280439d7a16f645be94f22e6da50e579a1f3011d0a2381755bfe2c2ef7"
+    },
+    {
+      "path": "vendor/chess.js",
+      "source": "chess.js-1.4.0.tgz:package/dist/esm/chess.js",
+      "bytes": 107052,
+      "sha256": "76c7c34f0e2e9ab076521a5d6fe786a9cce537bb1b6f29d32a9c9970b5b232d2"
+    },
+    {
+      "path": "vendor/chess.js.map",
+      "source": "chess.js-1.4.0.tgz:package/dist/esm/chess.js.map",
+      "bytes": 138549,
+      "sha256": "2a9afbda2477e80182786555b0bbb03d66d33d425e90d61c087b51fa0e8e3b20"
+    }
+  ],
+  "externalSources": [
+    {
+      "kind": "stockfish-js-fork",
+      "url": "https://codeload.github.com/nmrugg/stockfish.js/tar.gz/31a98753a5d932511693f44775da908377c24513",
+      "bytes": 583835,
+      "sha256": "590f93ab9140ff075809744aa3aec68c2ff877f25b15445f849c105df495bf31",
+      "verifiedOn": "2026-09-21",
+      "access": "Anonymous download; no payment required when verified",
+      "commit": "31a98753a5d932511693f44775da908377c24513",
+      "upstreamReleaseArchive": {
+        "url": "https://codeload.github.com/nmrugg/stockfish.js/tar.gz/refs/tags/v18.0.0",
+        "bytes": 583402,
+        "sha256": "04ab07ed29bdf4393187eb6f73bdf0f9d422168050f326cec039f87fac2121cb"
+      },
+      "contents": "Complete upstream fork archive, including engine/port sources, Makefiles, build.js and bundled build tools."
+    },
+    {
+      "kind": "nnue-build-input",
+      "url": "https://tests.stockfishchess.org/api/nn/nn-9067e33176e8.nnue",
+      "bytes": 6617595,
+      "sha256": "9067e33176e8c5edb7aa8db6a3aedd012f84a1f39872e86357c6c2d0993f314d",
+      "verifiedOn": "2026-09-21",
+      "access": "Anonymous download; no payment required when verified",
+      "filename": "nn-9067e33176e8.nnue",
+      "role": "Build input; its bytes are embedded in the locally distributed WASM."
+    }
+  ]
+}
