@@ -95,12 +95,14 @@ function pump() {
     } else {
       const job = owner.job;
       owner.phase = 'search';
-      job.timer = setTimeout(() => {
-        if (engine === owner && active === job) cancel('timeout');
-      }, job.movetimeMs + 1000);
+      if (job.movetimeMs !== undefined) {
+        job.timer = setTimeout(() => {
+          if (engine === owner && active === job) cancel('timeout');
+        }, job.movetimeMs + 1000);
+      }
       show('state', 'analyzing'); show('engineStatus', 'Stockfish 18 Lite');
       if (command(owner, `position fen ${job.position.fen}${job.position.moves.length ? ' moves ' + job.position.moves.join(' ') : ''}`)) {
-        command(owner, `go${job.depth ? ' depth ' + job.depth : ''} movetime ${job.movetimeMs}`);
+        command(owner, `go${job.depth ? ' depth ' + job.depth : ''}${job.movetimeMs !== undefined ? ' movetime ' + job.movetimeMs : ''}`);
       }
       return;
     }
@@ -188,7 +190,10 @@ function start(context, payload) {
   if (payload.limits !== undefined && !object(payload.limits)) fail('INVALID_PAYLOAD', 'limits must be an object');
   const requested = payload.limits || {};
   const depth = requested.depth === undefined ? undefined : integer(requested.depth, 1, 30, 'depth');
-  const movetimeMs = integer(requested.movetimeMs ?? 1000, 1, 10000, 'movetimeMs');
+  // Only searches without any explicit limit get the default time budget.
+  const movetimeMs = requested.movetimeMs === undefined
+    ? (depth === undefined ? 1000 : undefined)
+    : integer(requested.movetimeMs, 1, 10000, 'movetimeMs');
   const multiPv = integer(payload.multiPv ?? options.multiPv, 1, 8, 'multiPv');
   if (typeof Worker === 'undefined' || !window.crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') fail('ENGINE_UNAVAILABLE', 'This threaded build requires Web Workers, SharedArrayBuffer and cross-origin isolation (COOP/COEP)');
   const url = new URL(config.stockfishScriptUrl || './stockfish/stockfish-18-lite.js', window.location.href);

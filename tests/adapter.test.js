@@ -26,7 +26,7 @@ function harness() {
     assert.notEqual(id, undefined, `Expected a ${ms}ms timer`);
     const fn = timers.get(id); timers.delete(id); delays.delete(id); fn();
   };
-  return { events, dispatched, workers, timers, window, send, position, start, ready, fire, listeners, elements };
+  return { events, dispatched, workers, timers, delays, window, send, position, start, ready, fire, listeners, elements };
 }
 test('negotiation uses only CWEP and rejects unsupported protocols and versions', () => {
   const h = harness(); h.send('hello', {}, 'hi');
@@ -82,6 +82,93 @@ test('MultiPV updates keep rank-1 final score separate and normalize terminal mo
 });
 const completes = h => h.events.filter(e => e.type === 'analysisComplete');
 const gos = w => w.commands.filter(c => c.startsWith('go'));
+test('presets and omitted limits produce the requested UCI limits and watchdogs', () => {
+  for (const [payload, command, watchdog] of [
+    [{ limits: { depth: 14, movetimeMs: 500 } }, 'go depth 14 movetime 500', 1500],
+    [{ limits: { depth: 18, movetimeMs: 1000 } }, 'go depth 18 movetime 1000', 2000],
+    [{ limits: { depth: 20 } }, 'go depth 20', undefined],
+    [{}, 'go movetime 1000', 2000],
+    [{ limits: {} }, 'go movetime 1000', 2000],
+    [{ limits: { movetimeMs: 500 } }, 'go movetime 500', 1500]
+  ]) {
+    const h = harness(); h.position(); h.send('startAnalysis', payload, 'a');
+    const w = h.workers[0]; h.ready(w);
+    assert.equal(w.commands.at(-1), command);
+    assert.deepEqual([...h.delays.values()], watchdog === undefined ? [] : [watchdog]);
+    w.line('info depth 14 score cp 35 pv e2e4');
+    w.line('bestmove e2e4');
+    assert.equal(completes(h).length, 1);
+    assert.equal(completes(h)[0].payload.stoppedBy, 'limit');
+    assert.equal(completes(h)[0].payload.final.score.value, 35);
+    w.line('readyok'); assert.equal(h.timers.size, 0);
+  }
+});
+test('explicit invalid movetime is rejected without replacing a depth-only search', () => {
+  const h = harness(); h.position(); h.send('startAnalysis', { limits: { depth: 20 } }, 'deep');
+  const w = h.workers[0]; h.ready(w);
+  for (const movetimeMs of [null, 0, -1, 10001, 1.5, '500']) {
+    h.send('startAnalysis', { limits: { depth: 14, movetimeMs } }, 'invalid');
+    assert.equal(h.events.at(-1).payload.code, 'INVALID_PAYLOAD');
+  }
+  assert.equal(completes(h).length, 0); assert.ok(!w.commands.includes('stop'));
+  assert.equal(h.timers.size, 0);
+});
+test('depth-only stop completes once and retains the stop-confirmation watchdog', () => {
+  for (const responds of [true, false]) {
+    const h = harness(); h.position(); h.send('startAnalysis', { limits: { depth: 20 } }, 'deep');
+    const w = h.workers[0]; h.ready(w); assert.equal(h.timers.size, 0);
+    w.line('info depth 18 score cp 25 pv e2e4');
+    h.send('stopAnalysis', { analysisRequestId: 'deep' });
+    assert.equal(w.commands.at(-1), 'stop');
+    assert.equal(completes(h)[0].payload.stoppedBy, 'stop');
+    assert.equal(completes(h)[0].payload.bestMove, 'e2e4');
+    assert.deepEqual([...h.delays.values()], [2000]);
+    if (responds) { w.line('bestmove e2e4'); w.line('readyok'); assert.ok(!w.terminated); }
+    else { h.fire(2000); assert.ok(w.terminated); }
+    assert.equal(completes(h).length, 1); assert.equal(h.timers.size, 0);
+    h.start('next'); const next = h.workers.at(-1);
+    if (responds) next.line('readyok'); else h.ready(next);
+    assert.equal(next.commands.at(-1), 'go depth 8 movetime 200');
+  }
+});
+test('successive timed and depth-only searches clear timers and isolate replaced output', () => {
+  const h = harness(); h.position(); h.start('timed'); const w = h.workers[0]; h.ready(w);
+  w.line('bestmove e2e4'); w.line('readyok');
+  h.send('startAnalysis', { limits: { depth: 20 } }, 'deep'); w.line('readyok');
+  assert.equal(w.commands.at(-1), 'go depth 20'); assert.equal(h.timers.size, 0);
+  h.start('next'); assert.equal(w.commands.at(-1), 'stop');
+  const count = h.events.length;
+  w.line('readyok\ninfo depth 20 score cp 999 pv d2d4');
+  assert.equal(h.events.length, count); assert.equal(gos(w).length, 2);
+  w.line('bestmove d2d4'); w.line('readyok'); w.line('readyok');
+  assert.equal(w.commands.at(-1), 'go depth 8 movetime 200');
+  assert.deepEqual([...h.delays.values()], [1200]);
+  w.line('bestmove g1f3'); w.line('readyok');
+  assert.deepEqual(completes(h).map(e => [e.requestId, e.payload.stoppedBy]),
+    [['timed', 'limit'], ['deep', 'replaced'], ['next', 'limit']]);
+  assert.equal(h.workers.length, 1); assert.equal(h.timers.size, 0);
+});
+test('depth-only worker failures complete once and a later request recovers', () => {
+  for (const failure of ['onerror', 'onmessageerror', 'postMessage']) {
+    const h = harness(); h.position(); h.send('startAnalysis', { limits: { depth: 20 } }, 'deep');
+    const old = h.workers[0];
+    if (failure === 'postMessage') {
+      const post = old.postMessage.bind(old);
+      old.postMessage = command => { if (command.startsWith('go')) throw new Error('closed'); post(command); };
+      h.ready(old);
+    } else { h.ready(old); old[failure](); }
+    assert.ok(old.terminated); assert.equal(h.timers.size, 0);
+    assert.equal(h.events.at(-2).payload.code, 'ENGINE_UNAVAILABLE');
+    assert.equal(completes(h).length, 1); assert.equal(completes(h)[0].payload.stoppedBy, 'error');
+    h.send('startAnalysis', { limits: { depth: 20 } }, 'recovered');
+    const w = h.workers[1]; h.ready(w);
+    const count = h.events.length; old.line('bestmove d2d4'); old.onerror();
+    assert.equal(h.events.length, count); assert.equal(h.timers.size, 0);
+    w.line('bestmove e2e4'); w.line('readyok');
+    assert.equal(completes(h).length, 2); assert.equal(completes(h)[1].requestId, 'recovered');
+    assert.equal(completes(h)[1].payload.stoppedBy, 'limit'); assert.equal(h.timers.size, 0);
+  }
+});
 test('completed analyses reuse one initialized worker and reapply search options', () => {
   const h = harness(); h.position(); h.start('a'); const w = h.workers[0]; h.ready(w);
   w.line('bestmove e2e4'); w.line('readyok');
